@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 class DrawnLine {
-  final List<Offset> path;
+  final List<Offset?> path;
   final Color color;
   final double width;
 
