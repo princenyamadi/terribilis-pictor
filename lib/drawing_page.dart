@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:ui' as ui;
+import 'package:flutter/services.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:terriblis_pictor/drawn_line.dart';
 import 'package:terriblis_pictor/sketcher.dart';
 
@@ -26,11 +30,29 @@ class _DrawingPageState extends State<DrawingPage> {
       StreamController<DrawnLine?>.broadcast();
 
   Future<void> save() async {
-    // TODO
+    try {
+      final boundary = _globalKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary;
+
+      final image = await boundary.toImage();
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      final pngBytes = byteData?.buffer.asUint8List();
+      final saved = await ImageGallerySaver.saveImage(
+        pngBytes!,
+        quality: 100,
+        name: DateTime.now().toIso8601String() + "png",
+        isReturnImagePathOfIOS: true,
+      );
+    } catch (e) {
+      print(e);
+    }
   }
 
   Future<void> clear() async {
-    // TODO
+    setState(() {
+      lines = [];
+      line = null;
+    });
   }
 
   void onPanStart(DragStartDetails details) {
@@ -157,6 +179,10 @@ class _DrawingPageState extends State<DrawingPage> {
           crossAxisAlignment: CrossAxisAlignment.center,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
+            buildClearButton(),
+            const Divider(height: 10.0),
+            buildSaveButton(),
+            const Divider(height: 20.0),
             buildColorButton(Colors.red),
             buildColorButton(Colors.blueAccent),
             buildColorButton(Colors.deepOrange),
@@ -190,6 +216,19 @@ class _DrawingPageState extends State<DrawingPage> {
       child: const CircleAvatar(
         child: Icon(
           Icons.save,
+          size: 20.0,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  Widget buildClearButton() {
+    return GestureDetector(
+      onTap: clear,
+      child: const CircleAvatar(
+        child: Icon(
+          Icons.create,
           size: 20.0,
           color: Colors.white,
         ),
